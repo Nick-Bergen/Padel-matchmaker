@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.js"
+      integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Club</title>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="overzicht.html">Spelers</a>
+          </li>
+          <li class="nav-item active">
+            <a class="nav-link" href="clubOverzicht.html">Clubs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="wedstrijdOverzicht.html">Wedstrijden</a>
+        </li>
+        </ul>
+      </div>
+    </nav>
+
+    <h2 class="text-center" id="clubNaam"></h2>
+    <div class="container mt-5 w-50">
+      <div class="row">
+        <div class="col">
+          <table class="table">
+            <tbody name="clubs"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row mt-5" id="button"></div>
+      <div class="row mt-5">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Baan Naam</th>
+            </tr>
+          </thead>
+          <tbody name="banenLijst"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal" id="voegBaantoePopup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Voeg nieuwe baan toe</h5>
+            <button type="button" class="close">
+              <span>&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Geef de nieuwe baan een naam</p>
+            <input type="text" name="baanNaam" id="baanNaam" />
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              onclick="voegBaanToe()"
+              class="btn btn-primary"
+              data-dismiss="modal"
+            >
+              Voeg toe
+            </button>
+            <button
+              type="button"
+              onclick="sluitPopup('voegBaantoePopup')"
+              class="btn btn-secondary"
+            >
+              Sluiten
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    var urlParams = new URLSearchParams(window.location.search);
+    var club = urlParams.get("naam");
+
+    if (club == localStorage.getItem("clubNaam")) {
+      document.getElementById("button").innerHTML =
+        '<button class="btn btn-primary" onclick="openPopup(`voegBaantoePopup`)">Voeg nieuwe baan toe</button>';
+    }
+
+    function voegBaanToe() {
+      var baanNaam = document.getElementById("baanNaam").value;
+      var club = urlParams.get("naam");
+
+      fetch("http://localhost:8080/field", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          naam: baanNaam,
+          clubNaam: club,
+        }),
+      })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          window.location.reload();
+        });
+    }
+
+    function openPopup(popupNaam) {
+      document.getElementById(popupNaam).style.display = "block";
+    }
+
+    function sluitPopup(popupNaam) {
+      document.getElementById(popupNaam).style.display = "none";
+    }
+
+    fetch("http://localhost:8080/club?clubNaam=" + club, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (result) {
+        var club = result;
+
+        var tr = document.createElement("tr");
+        var tdKey = document.createElement("td");
+        var tdPlaats = document.createElement("td");
+        tdKey.className = "font-weight-bold";
+        tdKey.innerHTML = "Club naam";
+        tdPlaats.innerHTML = club.plaats;
+        tr.appendChild(tdKey);
+        tr.appendChild(tdPlaats);
+        document.getElementsByName("clubs")[0].appendChild(tr);
+
+        tr = document.createElement("tr");
+        tdKey = document.createElement("td");
+        var tdTijden = document.createElement("td");
+        tdKey.className = "font-weight-bold";
+        tdKey.innerHTML = "Openingstijden";
+        tdTijden.innerHTML = club.tijden;
+        tr.appendChild(tdKey);
+        tr.appendChild(tdTijden);
+        document.getElementsByName("clubs")[0].appendChild(tr);
+
+        document.getElementById("clubNaam").innerHTML = club.naam;
+      });
+
+    fetch("http://localhost:8080/field/club?club=" + club, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (result) {
+        var banen = result.speelbanen;
+
+        for (var i = 0; i < banen.length; i++) {
+          var tr = document.createElement("tr");
+          var tdNaam = document.createElement("td");
+          tdNaam.innerHTML = banen[i].naam;
+          tr.appendChild(tdNaam);
+          document.getElementsByName("banenLijst")[0].appendChild(tr);
+        }
+      });
+  </script>
+</html>

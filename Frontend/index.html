@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+  />
+  <script
+  src="https://code.jquery.com/jquery-3.6.0.js"
+  integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+  crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+  <title>Home</title>
+</head>
+<body>
+  <div class="w-50 mt-5 mx-auto">
+    <form action="" method="post">
+      <div class="form-group">
+        <h1>Aanmelden Speler</h1>
+        <label for="alias">Alias:</label>
+        <input type="text" class="form-control" id="alias" name="alias" />
+      </div>
+      <div class="row mx-auto justify-content-between align-items-center">
+        <button onclick="formHandling()" class="btn btn-primary">Aanmelden</button>
+        <a href="clubaanmelden.html" class="link-primary">Ga naar club Aanmelden</a>
+      </div>
+    </form>
+  </div>
+  
+  <!-- popup die aangeeft dat de speler al bestaat -->
+  <div class="modal" id="spelerBestaatAlPopup">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Speler bestaat al
+          </h5>
+          <button type="button" class="close">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Deze speler bestaat al, wilt u doorgaan?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" onclick="goToOverzicht()" class="btn btn-primary" data-dismiss="modal">
+            Doorgaan
+          </button>
+          <button type="button" onclick="sluitPopup('spelerBestaatAlPopup')" class="btn btn-secondary">Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- popup die aangeeft dat de nieuwe speler een niveau moet invullen -->
+  <div class="modal" id="nieuweSpelerPopup">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Welkom nieuwe speler
+          </h5>
+          <button type="button" class="close">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Welk niveau heeft u?</p>
+          <input type="number" id="nieuwNiveau" name="nieuwNiveau"></input>
+        </div>
+        <div class="modal-footer">
+          <button type="button" onclick="registreer()" class="btn btn-primary" data-dismiss="modal">
+            Registreer
+          </button>
+          <button type="button" onclick="sluitPopup('nieuweSpelerPopup')" class="btn btn-secondary">Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Popup die aangeeft dat er een alias ingevult moet worden -->
+  <div class="modal" id="aliasInvullenPopup">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Alias is niet ingevuld
+          </h5>
+          <button type="button" class="close">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>U moet een alias invullen</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" onclick="sluitPopup('aliasInvullenPopup')" class="btn btn-secondary" data-dismiss="modal">
+            Sluiten
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <script>      
+      function formHandling() {
+        event.preventDefault();
+        var alias = document.getElementById("alias").value;
+        if (alias === "") {
+          openPopup("aliasInvullenPopup");
+          return;
+        }
+        
+        fetch("http://localhost:8080/player/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            alias: alias,
+          }),
+        })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          if (data.ranking === undefined) {
+            openPopup("nieuweSpelerPopup");
+          } else {
+            localStorage.setItem("niveau", data.ranking);
+            localStorage.setItem("alias", data.alias);
+            openPopup("spelerBestaatAlPopup");
+          }
+        });
+      }
+      
+      function goToOverzicht() {
+        window.location.href = "overzicht.html";
+      }
+      
+      function registreer() {
+        var alias = document.getElementById("alias").value;
+        var niveau = document.getElementById("nieuwNiveau").value;
+        
+        fetch("http://localhost:8080/player/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            alias: alias,
+            niveau: niveau
+          }),
+        })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          localStorage.setItem("niveau", niveau);
+          localStorage.setItem("alias", alias);
+          goToOverzicht();
+        });
+        
+      }
+      
+      function sluitPopup(popupNaam) {
+        document.getElementById(popupNaam).style.display = "none";
+      }
+      
+      function openPopup(popupNaam) {
+        document.getElementById(popupNaam).style.display = "block";
+      }
+    </script>
+  </body>
+  </html>
+  

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Home</title>
+  </head>
+  <body>
+    <div class="w-50 mt-5 mx-auto">
+      <form action="" method="post">
+        <div class="form-group">
+          <h1>Aanmelden Club</h1>
+          <label for="naam">Club naam:</label>
+          <input type="text" class="form-control" id="naam" name="naam" />
+        </div>
+        <div class="row mx-auto justify-content-between align-items-center">
+          <button onclick="formHandling()" class="btn btn-primary">Aanmelden</button>
+          <a href="index.html" class="link-primary">Ga naar speler Aanmelden</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- popup die aangeeft dat de speler al bestaat -->
+    <div class="modal" id="clubBestaatAlPopup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Club bestaat al
+            </h5>
+            <button type="button" class="close">
+              <span>&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Deze club bestaat al, wilt u doorgaan?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="goToOverzicht()" class="btn btn-primary" data-dismiss="modal">
+              Doorgaan
+            </button>
+            <button type="button" onclick="sluitPopup('clubBestaatAlPopup')" class="btn btn-secondary">Sluiten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popup die aangeeft dat er een naam ingevult moet worden -->
+    <div class="modal" id="naamInvullenPopup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Club naam is niet ingevuld
+            </h5>
+            <button type="button" class="close">
+              <span>&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Het naam veld mag niet leeg zijn.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="sluitPopup('naamInvullenPopup')" class="btn btn-secondary" data-dismiss="modal">
+              Sluiten
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- popup die aangeeft dat de nieuwe club een niveau moet invullen -->
+    <div class="modal" id="nieuweClubPopup">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Welkom nieuwe club
+            </h5>
+            <button type="button" class="close">
+              <span>&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form method="POST">
+              <span id="meldingClubToevoegen" class="text-danger"></span>
+              <label for="plaats">Plaats</label>
+              <input type="text" class="form-control" id="plaats" name="plaats" placeholder="Amsterdam" required/>
+              <label for="tijden">Openingstijden</label>
+              <input type="text" class="form-control" id="tijden" name="tijden" placeholder="12:00-17:30" required/>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" onclick="registreer()" class="btn btn-primary" data-dismiss="modal">
+              Registreer
+            </button>
+            <button type="button" onclick="sluitPopup('nieuweClubPopup')" class="btn btn-secondary">Sluiten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script>
+      
+      function formHandling() {
+        event.preventDefault();
+        var naam = document.getElementById("naam").value;
+        if (naam === "") {
+          openPopup("naamInvullenPopup");
+          return;
+        }
+
+        fetch("http://localhost:8080/club/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            naam: naam,
+          }),
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data.naam === undefined) {
+              openPopup("nieuweClubPopup");
+            } else {
+              localStorage.setItem("clubNaam", naam);
+              openPopup("clubBestaatAlPopup");
+            }
+          });
+      }
+
+      function goToOverzicht() {
+        var naam = document.getElementById("naam").value;
+        window.location.href = "club.html?naam=" + naam;
+      }
+
+      function sluitPopup(popupNaam) {
+        document.getElementById(popupNaam).style.display = "none";
+      }
+
+      function openPopup(popupNaam) {
+        document.getElementById(popupNaam).style.display = "block";
+      }
+
+      function registreer() {
+        event.preventDefault();
+
+        var naam = document.getElementById("naam").value;
+        var plaats = document.getElementById("plaats").value;
+        var tijden = document.getElementById("tijden").value;
+        
+        if(plaats === "" || tijden === ""){
+          $("#meldingClubToevoegen").append("Vul alle velden in! <br />");
+          
+        }else{
+          
+          fetch("http://localhost:8080/club/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              naam: naam,
+              plaats: plaats,
+              tijden: tijden
+            }),
+          })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            localStorage.setItem("clubNaam", data.naam);
+            goToOverzicht();
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
