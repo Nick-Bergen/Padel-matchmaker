@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: ica.oose.padel.backend.BackendPadelApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.129 s - in ica.oose.padel.backend.BackendPadelApplicationTests
